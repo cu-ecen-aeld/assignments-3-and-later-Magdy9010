@@ -18,7 +18,7 @@ then
 		echo "Using default value ${NUMFILES} for number of files to write"
 	else
 		NUMFILES=$1
-	fi	
+	fi
 else
 	NUMFILES=$1
 	WRITESTR=$2
@@ -37,6 +37,7 @@ assignment=`cat ../conf/assignment.txt`
 if [ $assignment != 'assignment1' ]
 then
 	mkdir -p "$WRITEDIR"
+	echo DIRECTORY $WRITEDIR CREATEEEED
 
 	#The WRITEDIR is in quotes because if the directory path consists of spaces, then variable substitution will consider it as multiple argument.
 	#The quotes signify that the entire string in WRITEDIR is a single string.
@@ -48,21 +49,26 @@ then
 		exit 1
 	fi
 fi
-#echo "Removing the old writer utility and compiling as a native application"
-#make clean
+
+echo "Removing the old writer utility and compiling as a native application"
+make clean
 #make
 
 for i in $( seq 1 $NUMFILES)
 do
-	./writer.sh "$WRITEDIR/${username}$i.txt" "$WRITESTR"
+	./writer "$WRITEDIR/${username}$i.txt" "$WRITESTR"
+	echo "$WRITEDIR/${username}$i.txt" "$WRITESTR"
 done
+
+#ls -la $WRITEDIR
 
 OUTPUTSTRING=$(./finder.sh "$WRITEDIR" "$WRITESTR")
 
-# remove temporary directories
-rm -rf /tmp/aeld-data
+#echo remove temporary directories
+#rm -rf /tmp/aeld-data
 
 set +e
+
 echo ${OUTPUTSTRING} | grep "${MATCHSTR}"
 if [ $? -eq 0 ]; then
 	echo "success"
