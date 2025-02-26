@@ -87,67 +87,80 @@ git clone git://busybox.net/busybox.git
 
     
 else
+    echo "====== Changing Directory to BusyBox ======"
     cd busybox
 fi
 
 # TODO: Make and install busybox
+echo "====== Make BusyBox ======"
 make ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} 
+
+echo "====== Install BusyBox ======"
 make CONFIG_PREFIX=${OUTDIR}/rootfs ARCH=${ARCH} CROSS_COMPILE=${CROSS_COMPILE} install
 
-echo "Library dependencies"
-
-${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "program interpreter"
-${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | grep "Shared library"
+echo "====== Library dependencies ======"
+${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | echo "$(grep "program interpreter")"
+${CROSS_COMPILE}readelf -a ${OUTDIR}/rootfs/bin/busybox | echo "$(grep "Shared library")"
 
 # TODO: Add library dependencies to rootfs
+echo "====== Add library dependencies to rootfs ======"
 SYSROOT=$(${CROSS_COMPILE}gcc -print-sysroot)
 mkdir -p "${OUTDIR}/rootfs/lib"
 mkdir -p "${OUTDIR}/rootfs/lib64"
 
-echo "coping ld-linux-aarch64.so.1"
+echo "====== coping ld-linux-aarch64.so.1 ====== "
 cp "$SYSROOT/lib/ld-linux-aarch64.so.1" "${OUTDIR}/rootfs/lib/"
 
-echo "coping libm.so.6"
-cp "$SYSROOT/lib/aarch64-linux-gnu/libm.so.6" "${OUTDIR}/rootfs/lib64/"
+echo "====== coping libm.so.6 ======"
+cp "$SYSROOT/lib/aarch64-linux-gnu/libm.so.6" "${OUTDIR}/rootfs/lib/"
 
-echo "coping libresolv.so.2"
-cp "$SYSROOT/lib/aarch64-linux-gnu/libresolv.so.2" "${OUTDIR}/rootfs/lib64/"
+echo "====== coping libresolv.so.2 ======"
+cp "$SYSROOT/lib/aarch64-linux-gnu/libresolv.so.2" "${OUTDIR}/rootfs/lib/"
 
-echo "coping libc.so.6"
-cp "$SYSROOT/lib/aarch64-linux-gnu/libc.so.6" "${OUTDIR}/rootfs/lib64/"
+echo "====== coping libc.so.6 ======"
+cp "$SYSROOT/lib/aarch64-linux-gnu/libc.so.6" "${OUTDIR}/rootfs/lib/"
 
 # TODO: Make device nodes
-
+echo "====== Make device nodes ========"
 sudo mknod -m 666 "$OUTDIR/rootfs/dev/null" c 1 3
 sudo mknod -m 600 "$OUTDIR/rootfs/dev/console" c 5 1
 
 
 # TODO: Clean and build the writer utility
+echo "====== Change Directory to FINDER APP ======"
 cd "$FINDER_APP_DIR"
+
+echo "====== Clean and build the writer utility ========"
 make clean
 make CROSS_COMPILE=$CROSS_COMPILE
 
 # TODO: Copy the finder related scripts and executables to the /home directory
 # on the target rootfs
-echo "Coping old assignments Scripts"
+echo "======= Coping old assignments Scripts ======="
 cp finder.sh finder-test.sh autorun-qemu.sh "${OUTDIR}/rootfs/home" 
 
-echo "Coping assignment.txt & username.txt"
+echo "======= Coping assignment.txt & username.txt ======="     
 mkdir "${OUTDIR}/rootfs/home/conf"
-cp conf/assignment.txt conf/username.txt "${OUTDIR}/rootfs/home/conf"
+CONF_SRC_DIR=/home/ubuntu/advLinux/assignment-1-amhatata/finder-app/conf
+
+#cp conf/assignment.txt conf/username.txt "${OUTDIR}/rootfs/home/conf"
+cp "${CONF_SRC_DIR}/assignment.txt" "${OUTDIR}/rootfs/home/conf"
+cp "${CONF_SRC_DIR}/username.txt" "${OUTDIR}/rootfs/home/conf"
 
 
 # TODO: Chown the root directory
-echo "Chown the root directory"
-sudo chown root:root "${OUTDIR}/rootfs"
+echo "======= Chown the root directory ======="
+sudo chown -R root:root *
+#"${OUTDIR}/rootfs"
+
+cd "$OUTDIR/rootfs"
 
 # TODO: Create initramfs.cpio.gz
-echo "Create initramfs.cpio.gz"
+echo "======= Create initramfs.cpio.gz ======="
 find . | cpio -H newc -ov --owner root:root > "${OUTDIR}/initramfs.cpio"
+echo "======= cpio.gzip ======="
+gzip -f -v "${OUTDIR}/initramfs.cpio"
 
-echo "cpio.gzip"
+##find . | cpio -H newc -ov --owner root:root | gzip -9 > ${OUTDIR}/initramfs.cpio.gz
 
-gzip -f "${OUTDIR}/initramfs.cpio"
-
-
-echo "All done"
+echo "======= All done ======="
