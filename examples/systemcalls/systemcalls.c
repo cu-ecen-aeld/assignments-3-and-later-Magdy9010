@@ -129,6 +129,7 @@ bool do_exec_redirect(const char *outputfile, int count, ...)
 
   		case -1:
 			return false;  //return failure
+            
   		case 0:
     			if (dup2(fd, STDOUT_FILENO) < 0)
 				{
